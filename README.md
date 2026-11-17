@@ -1,115 +1,108 @@
 # idea-bot
 
-Телеграм-бот, который разбирает идею по шагам и выносит вердикт GO / PIVOT / KILL.
-Не одна простыня в ответ на промпт, а восемь отдельных шагов с гейтом между ними:
-каждый шаг — свой вызов модели, своё сообщение и своя развилка «дальше / поправить / пауза».
+**English** · [Русский](README.ru.md)
 
-## Шаги
+A Telegram bot that takes a business idea apart step by step and gives a GO / PIVOT / KILL verdict. Not one wall of text
+in answer to a prompt, but eight separate steps with a gate between them: each step is its own model call, its own
+message and its own fork, "next / correct / pause". The bot talks to its users in Russian.
 
-| # | Шаг | Веб | В быстром режиме |
-|---|-----|-----|------------------|
-| 1 | Формулировка | — | да |
-| 2 | Допущения (🔴 смертельные) | — | да |
-| 3 | Спрос — проверка по реальным данным | да | — |
-| 4 | Конкуренты | да | — |
-| 5 | Премортем | — | да |
-| 6 | Реальность ресурсов | — | — |
-| 7 | Самый дешёвый тест | — | да |
-| 8 | Вердикт | — | да |
+## Steps
 
-Шаг видит сырую идею и все предыдущие шаги — и ничего про будущие. Поэтому он не может
-свернуть весь разбор в один ответ.
+| # | Step | Web | In fast mode |
+|---|------|-----|--------------|
+| 1 | Statement | — | yes |
+| 2 | Assumptions (🔴 fatal ones) | — | yes |
+| 3 | Demand, checked against real data | yes | — |
+| 4 | Competitors | yes | — |
+| 5 | Pre-mortem | — | yes |
+| 6 | Resource reality check | — | — |
+| 7 | The cheapest test | — | yes |
+| 8 | Verdict | — | yes |
 
-## Профиль дела
+A step sees the raw idea and every step before it, and nothing about the steps after it. So it cannot fold the whole
+analysis into a single answer.
 
-После брифа бот спрашивает кнопкой, что это: **точка с помещением**, **услуга без
-помещения** или **онлайн-продукт**. Профиль меняет и системный промпт (кто перед тобой
-и что убивает такое дело), и акценты отдельных шагов — `PROFILE_SYSTEM` и `PROFILE_HINTS`
-в `bot/steps.py`.
+## Business profile
 
-Для точки спрос ищется в картах и отзывах района, конкуренты — в радиусе пешей
-доступности, ресурсы считаются в чеках за день против аренды и ФОТ, а дешёвый тест —
-это замер потока с секундомером, а не пост на реддите. Для выездной услуги то же самое
-через заявки с Авито и 2ГИС, стоимость заявки и потолок «сколько заказов влезает
-в неделю». Онлайн-профиль остался прежним.
+After the brief, the bot asks with a button what this is: **a venue with premises**, **a service without premises** or
+**an online product**. The profile changes both the system prompt (who is in front of you and what kills this kind of
+business) and the emphasis of individual steps: `PROFILE_SYSTEM` and `PROFILE_HINTS` in `bot/steps.py`.
 
-## Бриф на входе
+For a venue, demand is looked up in maps and reviews of the neighbourhood, competitors within walking distance,
+resources are counted as receipts per day against rent and payroll, and the cheap test is counting passers-by with a
+stopwatch, not a post on Reddit. For a mobile service the same goes through requests on local classifieds and business
+directories (Avito, 2GIS), the cost of a lead and the ceiling of "how many jobs fit into a week". The online profile
+stayed as it was.
 
-«Разобрать идею» открывается не пустым полем, а списком из семи пунктов — идея, клиент,
-что он делает сейчас, деньги, что уже есть, сколько вложишь, город. Следом идёт
-пустой шаблон в `<pre>`: тапнул — скопировал — заполнил. Описание можно слать
-несколькими сообщениями, они склеиваются; счётчик символов и кнопка «Готово» ждут,
-пока человек не решит, что хватит. Короче 320 символов бот честно предупреждает,
-что разбор выйдет общим, но начать не мешает.
+## The brief
 
-## Микро-опрос между шагами
+"Analyse an idea" opens not with an empty field but with a list of seven points: the idea, the customer, what the
+customer does now, money, what already exists, how much you will put in, the city. Then comes an empty template in
+`<pre>`: tap, copy, fill in. The description can be sent in several messages, which are joined together; a character
+counter and a "Done" button wait until the person decides it is enough. Under 320 characters the bot warns honestly
+that the analysis will come out generic, but does not stop them from starting.
 
-Перед шагами 1, 3 и 6 бот отдельным дешёвым вызовом придумывает два вопроса под конкретную
-идею — не из фиксированного списка. Каждый приходит с 3-4 кнопками-вариантами, кнопкой
-«✍️ Своими словами» и двумя выходами: «→ Пропустить» и «→ Пропустить всё». Отвечать
-необязательно: пропуск — полноценный ответ, шаг просто идёт без этих данных.
+## A short survey between steps
 
-Ответы копятся в таблице `questions` и подмешиваются во все последующие шаги блоком
-«что пользователь рассказал о себе». Пропущенные в контекст не попадают.
-Какие шаги спрашивают — флаг `ask=True` в `bot/steps.py`.
+Before steps 1, 3 and 6 the bot makes a separate cheap call to come up with two questions for this particular idea,
+not from a fixed list. Each comes with 3-4 answer buttons, a "✍️ In my own words" button and two ways out: "→ Skip" and
+"→ Skip all". Answering is optional: skipping is a full answer, and the step simply goes on without that data.
 
-## Запуск
+The answers collect in the `questions` table and are mixed into every later step as a block "what the user has told
+about themselves". Skipped questions never reach the context. Which steps ask is the `ask=True` flag in `bot/steps.py`.
 
-1. `@BotFather` → новый бот → токен в `.env` (`TELEGRAM_BOT_TOKEN=`).
-2. Ключ Anthropic в `.env` (`ANTHROPIC_API_KEY=`). Модель по умолчанию —
-   `claude-sonnet-5`, меняется строкой `ANTHROPIC_MODEL=` там же. OpenRouter остался
-   запасным путём: используется, только если ключа Anthropic нет.
+## Running it
+
+1. `@BotFather` → a new bot → its token into `.env` (`TELEGRAM_BOT_TOKEN=`).
+2. An Anthropic key into `.env` (`ANTHROPIC_API_KEY=`). The default model is `claude-sonnet-5`, changed by the line
+   `ANTHROPIC_MODEL=` in the same file. OpenRouter stays as a fallback: it is used only when there is no Anthropic key.
 3. `run.bat`.
 
-## Отчёт
+## The report
 
-После вердикта (и в карточке любого разбора) кнопка «📄 Отчёт» отдаёт разбор одним
-самодостаточным `.html`: обложка с плашкой вердикта, полоски оценок, оглавление, шаги,
-допущения таблицей с маркерами 🔴🟡⚪, источники ссылками и разворот «на что этот отчёт
-не отвечает» — он же прогрев к платному треку.
+After the verdict (and on the card of any analysis) the "📄 Report" button gives the analysis as one self-contained
+`.html`: a cover with the verdict badge, score bars, a table of contents, the steps, the assumptions as a table with
+🔴🟡⚪ markers, sources as links, and a spread "what this report does not answer", which also leads into the paid track.
 
-Внутри файла нет ничего внешнего: ни шрифтов, ни картинок, ни скриптов. Открывается
-из чата, работает офлайн, печатается в PDF через Ctrl+P (разрывы страниц уже расставлены).
-Markdown-выгрузка осталась, но видна только админу.
+There is nothing external inside the file: no fonts, no pictures, no scripts. It opens from the chat, works offline and
+prints to PDF with Ctrl+P (page breaks are already in place). The Markdown export is still there, but only the admin
+sees it.
 
-## Проверка без телеграма
+## Checking without Telegram
 
 ```
-python tools/dry_run.py 2 fast     # первые два шага быстрого маршрута
-python tools/dry_run.py 8 full     # весь разбор, с веб-поиском на 3-4
-python tools/test_flow.py          # офлайн-проверка опроса и отчёта, без ключей
-python tools/demo_report.py        # пересобрать демо-отчёт из exports/demo-razbor-*.md
+python tools/dry_run.py 2 fast     # the first two steps of the fast route
+python tools/dry_run.py 8 full     # the whole analysis, with web search on steps 3-4
+python tools/test_flow.py          # an offline check of the survey and the report, no keys needed
+python tools/demo_report.py        # rebuild the demo report from exports/demo-razbor-*.md
 ```
 
-## Что где
+## Where things are
 
-- `bot/steps.py` — все промпты. Тон и жёсткость правятся только здесь.
-- `bot/engine.py` — сборка контекста шага и вызов модели.
-- `bot/handlers.py` — телеграм-поток: гейты, пауза, «поправить», список разборов.
-- `bot/llm.py` — Anthropic Messages API (серверный `web_search`, adaptive thinking,
-  докрутка `pause_turn`); OpenRouter как запасной провайдер. Поиск включается только
-  на шагах 3-4 и только по кнопке.
-- `bot/render.py` — markdown-lite модели → безопасный Telegram HTML, разбивка на сообщения.
-- `bot/billing.py` — звёзды, бесплатный первый разбор, рефералы.
-- `exports/` — разборы, выгруженные файлом.
+- `bot/steps.py` — every prompt. Tone and strictness are changed here only.
+- `bot/engine.py` — building a step's context and calling the model.
+- `bot/handlers.py` — the Telegram flow: gates, pause, "correct", the list of analyses.
+- `bot/llm.py` — the Anthropic Messages API (server-side `web_search`, adaptive thinking, continuing after
+  `pause_turn`); OpenRouter as the fallback provider. Search is on only for steps 3-4 and only by a button.
+- `bot/render.py` — the model's markdown-lite into safe Telegram HTML, split into messages.
+- `bot/billing.py` — Telegram Stars, a free first analysis, referrals.
+- `exports/` — analyses exported as files.
 
-## «Запуск» — платный трек
+## "Launch", the paid track
 
-После вердикта GO или PIVOT бот предлагает пакет «Запуск»: финмодель, локация,
-юридический чек-лист, смета с поставщиками, план на 60 дней. После KILL не предлагает —
-допродажа к «не делай» выглядит хамством.
+After a GO or PIVOT verdict the bot offers the "Launch" package: a financial model, location, a legal checklist, a cost
+estimate with suppliers, a 60-day plan. After KILL it does not: an upsell on top of "don't do it" looks rude.
 
-Оплата ручная, без провайдера: бот выставляет счёт с номером, покупатель переводит
-по реквизитам из `PAY_DETAILS` и жмёт «Я оплатил», админу прилетает заявка с кнопками
-подтвердить/отклонить. `/orders` показывает последние счета и всё, что ждёт проверки.
-Двойное нажатие не плодит счета — открытый счёт по тому же разбору переиспользуется.
+Payment is manual, with no provider: the bot issues an invoice with a number, the buyer pays by the details in
+`PAY_DETAILS` and presses "I've paid", and the admin gets a request with confirm / reject buttons. `/orders` shows the
+latest invoices and everything waiting for a check. A double press does not multiply invoices: an open invoice for the
+same analysis is reused.
 
-`LAUNCH_ENABLED=0` в `.env` прячет предложение от всех, кроме админа. Пока артефактов
-нет, так и должно быть: продавать то, чего не существует, нельзя. Заполни `PAY_DETAILS`,
-иначе бот честно скажет, что платить некуда.
+`LAUNCH_ENABLED=0` in `.env` hides the offer from everyone but the admin. Until the deliverables exist, that is how it
+should be: you cannot sell what does not exist. Fill in `PAY_DETAILS`, or the bot will honestly say there is nowhere to
+pay.
 
-## Деньги за разбор
+## What an analysis costs
 
-Списывается один раз, при старте разбора: полный — 30⭐, быстрый — 12⭐.
-Первый разбор бесплатный. Оплаченный разбор можно ставить на паузу и возвращаться
-бесконечно, «поправить» на шаге — бесплатно, до трёх раз.
+It is charged once, when the analysis starts: a full one is 30⭐, a fast one 12⭐. The first analysis is free. A paid
+analysis can be paused and resumed any number of times, and "correct" on a step is free, up to three times.
